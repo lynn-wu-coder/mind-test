@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>测测你潜意识里最渴望什么</title>
+<style>
+  /* ========== 全局样式 ========== */
+  :root {
+    --bg: #FFF9F5;
+    --accent: #FF6B5A;
+    --ink: #2B2B2B;
+    --ink-soft: #8A8380;
+    --line: #F0E4DE;
+    --card: #FFFFFF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: #F2EBE6;
+    color: var(--ink);
+    line-height: 1.6;
+  }
+  /* 移动端优先，最大宽度 480px 居中 */
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--bg);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 40px rgba(0,0,0,.06);
+  }
+  button { font-family: inherit; border: none; background: none; cursor: pointer; color: inherit; }
+
+  /* ========== 页面切换 ========== */
+  .page { display: none; flex: 1; flex-direction: column; padding: 24px 20px calc(env(safe-area-inset-bottom, 0px) + 76px); }
+  .page.active { display: flex; animation: fadeInUp .45s ease both; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ========== 封面页 ========== */
+  #page-cover { justify-content: center; align-items: center; text-align: center; }
+  .cover-emoji { font-size: 64px; margin-bottom: 18px; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+  .cover-badge {
+    display: inline-block; padding: 4px 14px; border-radius: 999px;
+    background: #FFE9E5; color: var(--accent); font-size: 12px; font-weight: 600;
+    letter-spacing: 2px; margin-bottom: 20px;
+  }
+  .cover-title { font-size: 30px; font-weight: 800; line-height: 1.35; letter-spacing: 1px; }
+  .cover-title em { font-style: normal; color: var(--accent); position: relative; }
+  .cover-sub { margin-top: 12px; font-size: 14px; color: var(--ink-soft); }
+  .cover-hint {
+    margin-top: 28px; padding: 12px 18px; border-radius: 14px;
+    background: var(--card); border: 1px dashed var(--line);
+    font-size: 13px; color: var(--ink-soft);
+  }
+  .cover-hint b { color: var(--ink); }
+
+  /* ========== 通用按钮 ========== */
+  .btn-main {
+    display: block; width: 100%; margin-top: 36px;
+    padding: 16px; border-radius: 999px;
+    background: var(--accent); color: #fff;
+    font-size: 17px; font-weight: 700; letter-spacing: 4px;
+    box-shadow: 0 8px 20px rgba(255,107,90,.35);
+    transition: transform .12s ease, box-shadow .12s ease;
+  }
+  .btn-main:active { transform: scale(.96); box-shadow: 0 4px 10px rgba(255,107,90,.3); }
+  .btn-main:disabled { opacity: .6; }
+  .btn-ghost {
+    display: block; width: 100%; margin-top: 14px;
+    padding: 14px; border-radius: 999px;
+    background: transparent; border: 1.5px solid var(--line); color: var(--ink-soft);
+    font-size: 15px; transition: transform .12s ease;
+  }
+  .btn-ghost:active { transform: scale(.97); }
+  .cover-meta { margin-top: 22px; font-size: 12px; color: #C9BFBA; letter-spacing: 1px; }
+
+  /* ========== 答题页 ========== */
+  #page-quiz { padding-top: 0; }
+  .quiz-top { position: sticky; top: 0; background: var(--bg); padding: 16px 0 12px; z-index: 5; }
+  .quiz-progress-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .quiz-count { font-size: 14px; font-weight: 700; }
+  .quiz-count span { color: var(--accent); font-size: 18px; }
+  .quiz-total { font-size: 12px; color: var(--ink-soft); }
+  .progress-track { height: 8px; border-radius: 999px; background: #F3E6E0; overflow: hidden; }
+  .progress-bar {
+    height: 100%; width: 0; border-radius: 999px;
+    background: linear-gradient(90deg, #FF9A8B, var(--accent));
+    transition: width .4s cubic-bezier(.25,.8,.35,1);
+  }
+  .quiz-q {
+    margin-top: 28px; font-size: 21px; font-weight: 800; line-height: 1.5;
+    animation: fadeInUp .35s ease both;
+  }
+  .quiz-options { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+  .option-btn {
+    text-align: left; padding: 16px 18px; border-radius: 16px;
+    background: var(--card); border: 1.5px solid var(--line);
+    font-size: 15px; line-height: 1.55; color: var(--ink);
+    display: flex; align-items: flex-start; gap: 12px;
+    transition: transform .12s ease, border-color .15s, background .15s;
+  }
+  .option-btn .opt-key {
+    flex-shrink: 0; width: 24px; height: 24px; margin-top: 1px;
+    border-radius: 50%; background: #F6EEEA; color: var(--ink-soft);
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, color .15s;
+  }
+  .option-btn:active { transform: scale(.97); }
+  .option-btn.chosen { border-color: var(--accent); background: #FFF1EE; }
+  .option-btn.chosen .opt-key { background: var(--accent); color: #fff; }
+  .quiz-back {
+    margin: 28px auto 0; display: flex; align-items: center; gap: 4px;
+    font-size: 13px; color: var(--ink-soft); padding: 8px 16px;
+    border-radius: 999px; transition: opacity .15s;
+  }
+  .quiz-back.hidden { visibility: hidden; pointer-events: none; }
+  .quiz-back:active { opacity: .6; }
+
+  /* ========== 计算页 ========== */
+  #page-loading { justify-content: center; align-items: center; text-align: center; }
+  .load-orb {
+    width: 72px; height: 72px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #FF9A8B, var(--accent));
+    box-shadow: 0 0 0 12px #FFE9E5, 0 0 0 24px #FFF3F0;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+  .load-text { margin-top: 40px; font-size: 16px; font-weight: 600; min-height: 28px; }
+  .load-dots::after { content: "…"; animation: dots 1.2s steps(4) infinite; }
+  @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "…"; } }
+
+  /* ========== 结果页 ========== */
+  #page-result { align-items: stretch; }
+  .result-card {
+    background: var(--card); border-radius: 24px; padding: 30px 24px;
+    border: 1.5px solid var(--line);
+    box-shadow: 0 12px 32px rgba(255,107,90,.10);
+    text-align: center;
+  }
+  .result-icon { font-size: 58px; line-height: 1; animation: float 3s ease-in-out infinite; }
+  .result-tag {
+    display: inline-block; margin-top: 16px; padding: 4px 14px;
+    border-radius: 999px; background: #FFE9E5; color: var(--accent);
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+  }
+  .result-name { margin-top: 10px; font-size: 34px; font-weight: 800; letter-spacing: 2px; }
+  .result-name::after {
+    content: ""; display: block; width: 42px; height: 4px; margin: 12px auto 0;
+    border-radius: 999px; background: var(--accent);
+  }
+  .result-verdict {
+    margin-top: 20px; font-size: 16px; font-weight: 800; line-height: 1.65;
+    color: var(--ink);
+  }
+  .result-keywords { margin-top: 18px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+  .keyword-pill {
+    padding: 5px 14px; border-radius: 999px;
+    background: #F6EEEA; color: var(--ink-soft);
+    font-size: 12px; font-weight: 600;
+  }
+  .result-section { text-align: left; margin-top: 22px; }
+  .result-section h4 {
+    font-size: 13px; color: var(--accent); font-weight: 700;
+    letter-spacing: 1px; margin-bottom: 6px;
+  }
+  .result-section p { font-size: 14px; color: #55504D; line-height: 1.75; }
+  /* 分享文案卡片 */
+  .share-box {
+    margin-top: 24px; padding: 18px; border-radius: 16px;
+    background: #FFF1EE; border: 1.5px dashed #FFC9C0;
+  }
+  .share-box h4 { font-size: 13px; color: var(--accent); font-weight: 700; margin-bottom: 8px; }
+  .share-text { font-size: 14px; line-height: 1.7; color: var(--ink); font-weight: 600; }
+  .btn-copy {
+    margin-top: 12px; padding: 8px 20px; border-radius: 999px;
+    background: var(--accent); color: #fff; font-size: 13px; font-weight: 700;
+    transition: transform .12s ease;
+  }
+  .btn-copy:active { transform: scale(.94); }
+  .result-actions { margin-top: 26px; }
+
+  /* ========== 底部固定免责声明 ========== */
+  .disclaimer {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    padding: 10px 20px calc(env(safe-area-inset-bottom, 0px) + 10px);
+    background: linear-gradient(to top, var(--bg) 70%, rgba(255,249,245,0));
+    font-size: 11px; color: #C4B8B2; text-align: center;
+    pointer-events: none; z-index: 10;
+  }
+
+  /* toast 提示 */
+  .toast {
+    position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 90px);
+    transform: translateX(-50%) translateY(10px);
+    background: rgba(43,43,43,.88); color: #fff;
+    padding: 10px 20px; border-radius: 999px; font-size: 13px;
+    opacity: 0; pointer-events: none; transition: all .25s ease; z-index: 99;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ========== 结果卡弹层（长按保存图片） ========== */
+  .card-overlay {
+    position: fixed; inset: 0; z-index: 200;
+    background: rgba(43,43,43,.75);
+    display: none; justify-content: center; align-items: center;
+    padding: 24px;
+    animation: fadeInUp .3s ease both;
+  }
+  .card-overlay.show { display: flex; }
+  .card-modal { text-align: center; max-width: 100%; }
+  .card-img {
+    width: min(70vw, 300px); max-height: 60vh; height: auto;
+    border-radius: 16px; box-shadow: 0 12px 40px rgba(0,0,0,.4);
+    display: block; margin: 0 auto;
+    /* 关键：防止 iOS 长按时触发系统放大/选择，保证长按出现"存储图像" */
+    -webkit-touch-callout: default;
+    -webkit-user-select: auto; user-select: auto;
+    pointer-events: auto;
+  }
+  .card-hint { margin-top: 14px; font-size: 13px; color: #FFF1EE; }
+  .card-actions { margin-top: 12px; display: flex; gap: 10px; justify-content: center; }
+  .card-btn {
+    padding: 10px 22px; border-radius: 999px; font-size: 14px; font-weight: 700;
+    background: var(--accent); color: #fff; transition: transform .12s ease;
+  }
+  .card-btn.ghost { background: rgba(255,255,255,.18); color: #fff; }
+  .card-btn:active { transform: scale(.95); }
+  /* iOS 上 download 属性基本无效时隐藏下载按钮 */
+  .card-btn.ios-hide { display: none; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+  <!-- 页面 1：封面页 -->
+  <section class="page" id="page-cover">
+    <div class="cover-emoji">🫀</div>
+    <span class="cover-badge">潜意识实验室</span>
+    <h1 class="cover-title">测测你潜意识里<br>最渴望<em>什么</em></h1>
+    <p class="cover-sub">12 道生活选择题，测出你嘴上不说、身体很诚实的渴望</p>
+    <div class="cover-hint">别想太久，<b>第一反应最准</b></div>
+    <button class="btn-main" id="btn-start">开始测试</button>
+    <p class="cover-meta">约 1 分钟 · 12 题 · 娱乐向</p>
+  </section>
+
+  <!-- 页面 2：答题页 -->
+  <section class="page" id="page-quiz">
+    <div class="quiz-top">
+      <div class="quiz-progress-row">
+        <div class="quiz-count">第 <span id="quiz-index">1</span> / 12 题</div>
+        <div class="quiz-total" id="quiz-progress-text">0%</div>
+      </div>
+      <div class="progress-track"><div class="progress-bar" id="quiz-bar"></div></div>
+    </div>
+    <h2 class="quiz-q" id="quiz-question"></h2>
+    <div class="quiz-options" id="quiz-options"></div>
+    <button class="quiz-back hidden" id="btn-back">← 上一题</button>
+  </section>
+
+  <!-- 页面 3：计算页 -->
+  <section class="page" id="page-loading">
+    <div class="load-orb"></div>
+    <p class="load-text"><span id="load-msg">正在读取你的潜意识</span><span class="load-dots"></span></p>
+  </section>
+
+  <!-- 页面 4：结果页 -->
+  <section class="page" id="page-result">
+    <div class="result-card">
+      <div class="result-icon" id="result-icon"></div>
+      <span class="result-tag" id="result-tag"></span>
+      <h2 class="result-name" id="result-name"></h2>
+      <p class="result-verdict" id="result-verdict"></p>
+      <div class="result-keywords" id="result-keywords"></div>
+      <div class="result-section">
+        <h4>🔎 说人话解释</h4>
+        <p id="result-desc"></p>
+      </div>
+      <div class="result-section">
+        <h4>🧃 损友式建议</h4>
+        <p id="result-advice"></p>
+      </div>
+      <div class="share-box">
+        <h4>📄 专属分享文案</h4>
+        <p class="share-text" id="result-share"></p>
+        <button class="btn-copy" id="btn-copy">复制文案</button>
+      </div>
+    </div>
+    <div class="result-actions">
+      <button class="btn-main" id="btn-share-card">生成结果卡 🖼️</button>
+      <button class="btn-ghost" id="btn-restart">再测一次</button>
+    </div>
+  </section>
+
+</div>
+
+<!-- 底部固定免责声明 -->
+<div class="disclaimer">本测试为娱乐向内容，非专业心理测评，结果仅供娱乐参考 ❤️</div>
+
+<!-- toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 结果卡弹层：长按图片保存 -->
+<div class="card-overlay" id="card-overlay">
+  <div class="card-modal">
+    <img class="card-img" id="card-img" alt="测试结果卡" draggable="false">
+    <p class="card-hint">📱 长按图片，选择「保存图片 / 存储到相册」</p>
+    <div class="card-actions">
+      <button class="card-btn" id="btn-card-download">下载图片</button>
+      <button class="card-btn ghost" id="btn-card-close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ================================================================
+ * 题目数据区：12 题，每题 4 个选项，key 对应结果类型
+ * ================================================================ */
+const questions = [
+  {
+    id: 1,
+    text: "你走进一个陌生房间，第一眼会看？",
+    options: [
+      { text: "哪里能让我被注意到，有没有镜子", key: "seen" },
+      { text: "出口、插座、Wi-Fi 在哪", key: "control" },
+      { text: "窗户能不能打开，门能不能关上", key: "free" },
+      { text: "有没有认识的人，旁边有没有位置", key: "love" }
+    ]
+  },
+  {
+    id: 2,
+    text: "群聊突然 99+，你第一反应？",
+    options: [
+      { text: "谁在吵，这局我不能输", key: "win" },
+      { text: "先翻有没有 @ 我，别漏事", key: "safe" },
+      { text: "有啥新瓜，快给我看看", key: "fresh" },
+      { text: "免打扰，世界清净", key: "quiet" }
+    ]
+  },
+  {
+    id: 3,
+    text: "你选择就餐的地方最关注？",
+    options: [
+      { text: "这家拍照好看吗，能发朋友圈吗", key: "seen" },
+      { text: "需要等号吗，出餐快不快", key: "control" },
+      { text: "有没有没吃过的新品", key: "fresh" },
+      { text: "店内是否安静", key: "quiet" }
+    ]
+  },
+  {
+    id: 4,
+    text: "朋友约你，又临时放了鸽子，你心里真实台词？",
+    options: [
+      { text: "那我自由了，正好去干别的", key: "free" },
+      { text: "临时改约，不太重视我吧", key: "love" },
+      { text: "那我下次爽约就不必觉得抱歉了", key: "win" },
+      { text: "有点慌，先确认新安排", key: "safe" }
+    ]
+  },
+  {
+    id: 5,
+    text: "你发朋友圈后最在意？",
+    options: [
+      { text: "有没有人和我互动，点赞评论越多越好", key: "seen" },
+      { text: "别给领导/客户/亲戚/讨厌的人看到了", key: "free" },
+      { text: "点赞数不能太惨，不然很尴尬", key: "win" },
+      { text: "有没有人被我种草、被内容新鲜到", key: "fresh" }
+    ]
+  },
+  {
+    id: 6,
+    text: "你理想中的周末早晨？",
+    options: [
+      { text: "日程排好，早餐、运动、打扫一条龙", key: "control" },
+      { text: "有人做好早餐叫我起床", key: "love" },
+      { text: "手机满电、冰箱有粮、没事发生", key: "safe" },
+      { text: "没人找我，睡到自然醒", key: "quiet" }
+    ]
+  },
+  {
+    id: 7,
+    text: "开会时你最怕？",
+    options: [
+      { text: "我发言没人接，空气突然安静", key: "seen" },
+      { text: "议程跑偏，没人控场", key: "control" },
+      { text: "被临时点名，还得当场表态", key: "free" },
+      { text: "我提的想法被无视，像没存在过", key: "love" }
+    ]
+  },
+  {
+    id: 8,
+    text: "逛超市你最容易拿？",
+    options: [
+      { text: "打折最后一件，先抢到就是赢", key: "win" },
+      { text: "家里常备那几样，囤着安心", key: "safe" },
+      { text: "没见过的新口味，先买再说", key: "fresh" },
+      { text: "买完就走，不逛不排队", key: "quiet" }
+    ]
+  },
+  {
+    id: 9,
+    text: "你收到一条长语音，会？",
+    options: [
+      { text: "先看是谁发的，重要的人立刻听", key: "seen" },
+      { text: "转文字，抓重点，再看要不要细听", key: "control" },
+      { text: "好奇他说了啥新鲜事，直接听", key: "fresh" },
+      { text: "不急，等空了再听", key: "quiet" }
+    ]
+  },
+  {
+    id: 10,
+    text: "你梦到自己在考试，最可能因为？",
+    options: [
+      { text: "找不到考场，急得想飞走", key: "free" },
+      { text: "考完有人在校门口等我", key: "love" },
+      { text: "比别人先交卷，还考得高", key: "win" },
+      { text: "准考证没带，疯狂检查口袋", key: "safe" }
+    ]
+  },
+  {
+    id: 11,
+    text: "如果明天不用上班，你会？",
+    options: [
+      { text: "发一条“今天不上班”的动态，等人羡慕", key: "seen" },
+      { text: "立刻出门，去哪都行，别问", key: "free" },
+      { text: "把一直想做的事做完，发个成果碾压朋友圈", key: "win" },
+      { text: "去个没去过的地方，吃点没吃过的", key: "fresh" }
+    ]
+  },
+  {
+    id: 12,
+    text: "你手机电量只剩 5%，最慌的是？",
+    options: [
+      { text: "没法安排接下来所有事", key: "control" },
+      { text: "没法回重要的人消息", key: "love" },
+      { text: "怕出事联系不上，先找充电宝", key: "safe" },
+      { text: "太好了，终于有理由消失一会儿", key: "quiet" }
+    ]
+  }
+];
+
+/* ================================================================
+ * 结果数据区：8 种结果，key 与题目选项 key 对应
+ * ================================================================ */
+const results = {
+  seen: {
+    name: "被看见",
+    tag: "C 位雷达",
+    icon: "👀",
+    keywords: ["被注意", "表达欲", "存在感"],
+    verdict: "你不是爱表现，你是怕没人发现你来过。",
+    desc: "你在意反馈和回应，发内容、发言、做事都希望被看见，没人接住会内耗。",
+    advice: "发之前问自己：我是想表达，还是想被夸？后者不丢人，但别装。",
+    share: "我潜意识最渴望：被看见。没人点赞我会怀疑人生。"
+  },
+  control: {
+    name: "掌控",
+    tag: "遥控器成瘾",
+    icon: "🎛️",
+    keywords: ["秩序", "计划", "主导权"],
+    verdict: "你不是控制欲强，你是受不了事情不在你手里。",
+    desc: "你喜欢提前安排、掌握进度，计划一乱就浑身难受。",
+    advice: "清单可以列，别给朋友也排班。",
+    share: "我潜意识最渴望：一切尽在掌握。计划一乱，我先乱。"
+  },
+  free: {
+    name: "自由",
+    tag: "越狱预备役",
+    icon: "🪟",
+    keywords: ["空间", "自主", "不被管"],
+    verdict: "你不是没责任心，你是一被管就想越狱。",
+    desc: "你需要自主空间，讨厌被安排、被点名、被追问。",
+    advice: "自由不是消失，提前说一声，能少很多误会。",
+    share: "我潜意识最渴望：自由。可以穷，但不能被管。"
+  },
+  love: {
+    name: "被爱",
+    tag: "偏爱认证机",
+    icon: "💌",
+    keywords: ["明确偏爱", "回应", "重视"],
+    verdict: "你不是恋爱脑，你是需要被明确偏爱，含糊的都不算。",
+    desc: "你在关系里要的是“你对我不一样”，最怕被随便对待。",
+    advice: "想要偏爱就说，别用阴阳怪气考试。",
+    share: "我潜意识最渴望：被偏爱。含糊的喜欢我不认。"
+  },
+  win: {
+    name: "赢",
+    tag: "赢麻了候补",
+    icon: "🏆",
+    keywords: ["好胜", "比较", "成就感"],
+    verdict: "你不是好胜，你只是不想在比较里输得太明显。",
+    desc: "你在意结果和排名，喜欢“我做到了”的爽感。",
+    advice: "赢可以，别把朋友当对手，除非是打游戏。",
+    share: "我潜意识最渴望：赢。可以累，但不能输得难看。"
+  },
+  safe: {
+    name: "安全",
+    tag: "退路囤货王",
+    icon: "🔋",
+    keywords: ["稳定", "退路", "确定感"],
+    verdict: "你不是怂，你是先囤好退路再出门。",
+    desc: "你需要确定性和安全感，喜欢常备方案、满电和存货。",
+    advice: "囤可以，别囤到过期；准备可以，别准备到不出门。",
+    share: "我潜意识最渴望：安全感。手机满电，冰箱有粮，没事发生。"
+  },
+  fresh: {
+    name: "新鲜",
+    tag: "三分钟热度续费员",
+    icon: "🎁",
+    keywords: ["新鲜感", "探索", "刺激"],
+    verdict: "你不是三分钟热度，你是旧东西真的会让你缺氧。",
+    desc: "你需要新信息、新体验、新口味，重复太久会没电。",
+    advice: "新坑可以开，旧坑至少填一个。",
+    share: "我潜意识最渴望：新鲜感。旧的不去，新的不来。"
+  },
+  quiet: {
+    name: "清净",
+    tag: "人间静音键",
+    icon: "🔇",
+    keywords: ["独处", "边界", "低噪音"],
+    verdict: "你不是冷漠，你是人一多就想关机。",
+    desc: "你需要安静和边界，讨厌无效社交和持续打扰。",
+    advice: "免打扰可以，重要的人设个例外。",
+    share: "我潜意识最渴望：清净。别找我，除非请我吃饭。"
+  }
+};
+
+/* ================================================================
+ * 计分函数：统计得分 + 平票规则处理
+ * 规则：取最高分；平票先看第 6 题所选结果的 key；
+ *      仍平票按固定顺序 seen→control→free→love→win→safe→fresh→quiet 取前者
+ * ================================================================ */
+const TIEBREAK_ORDER = ["seen", "control", "free", "love", "win", "safe", "fresh", "quiet"];
+
+function calculateResult(answers) {
+  // answers: { questionId: key }，统计每个结果 key 的得分
+  const scores = {};
+  TIEBREAK_ORDER.forEach(k => scores[k] = 0);
+  Object.values(answers).forEach(key => {
+    if (key in scores) scores[key] += 1;
+  });
+
+  const maxScore = Math.max(...Object.values(scores));
+  const tied = TIEBREAK_ORDER.filter(k => scores[k] === maxScore);
+
+  let resultKey;
+  if (tied.length === 1) {
+    resultKey = tied[0];
+  } else {
+    // 平票规则一：看第 6 题所选结果是否在平票集合里
+    const q6Answer = answers[6];
+    if (q6Answer && tied.includes(q6Answer)) {
+      resultKey = q6Answer;
+    } else {
+      // 平票规则二：按固定顺序取前者
+      resultKey = tied[0]; // TIEBREAK_ORDER 已按固定顺序排列，filter 保序
+    }
+  }
+  return { key: resultKey, scores: scores, maxScore: maxScore };
+}
+
+/* ================================================================
+ * 页面切换函数：显示指定 page，滚动回顶部
+ * ================================================================ */
+function showPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  const target = document.getElementById(pageId);
+  // 移除后重加动画，保证每次切换都触发 fadeInUp
+  void target.offsetWidth;
+  target.classList.add("active");
+  window.scrollTo({ top: 0, behavior: "auto" });
+}
+
+/* ================================================================
+ * 答题逻辑
+ * ================================================================ */
+let currentIndex = 0;            // 当前题目下标（0 起）
+let answers = {};                // { questionId: key }，保证不重复计分
+let isLocking = false;           // 防双击重复提交
+const TOTAL = questions.length;
+
+const elIndex = document.getElementById("quiz-index");
+const elBar = document.getElementById("quiz-bar");
+const elProgressText = document.getElementById("quiz-progress-text");
+const elQuestion = document.getElementById("quiz-question");
+const elOptions = document.getElementById("quiz-options");
+const elBack = document.getElementById("btn-back");
+
+function renderQuestion() {
+  const q = questions[currentIndex];
+  elIndex.textContent = q.id;
+  const pct = Math.round((currentIndex / TOTAL) * 100);
+  elBar.style.width = pct + "%";
+  elProgressText.textContent = pct + "%";
+
+  elQuestion.textContent = q.text;
+  elQuestion.style.animation = "none";
+  void elQuestion.offsetWidth;
+  elQuestion.style.animation = "";
+
+  elOptions.innerHTML = "";
+  const letters = ["A", "B", "C", "D"];
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "option-btn";
+    // 若已答过该题，高亮已选选项
+    if (answers[q.id] === opt.key) btn.classList.add("chosen");
+    btn.innerHTML = '<span class="opt-key">' + letters[i] + '</span><span>' + opt.text + '</span>';
+    btn.addEventListener("click", (e) => chooseOption(q.id, opt.key, e));
+    elOptions.appendChild(btn);
+  });
+
+  elBack.classList.toggle("hidden", currentIndex === 0);
+}
+
+function chooseOption(qId, key, evt) {
+  if (isLocking) return;   // 禁用双击重复提交
+  isLocking = true;
+
+  answers[qId] = key;      // 覆盖旧答案，天然不允许重复计分
+  // 高亮当前选中项
+  elOptions.querySelectorAll(".option-btn").forEach(b => b.classList.remove("chosen"));
+  if (evt && evt.currentTarget) evt.currentTarget.classList.add("chosen");
+
+  // 点击 200ms 后自动下一题
+  setTimeout(() => {
+    isLocking = false;
+    if (currentIndex < TOTAL - 1) {
+      currentIndex++;
+      renderQuestion();
+    } else {
+      // 最后一题，进入计算页
+      elBar.style.width = "100%";
+      elProgressText.textContent = "100%";
+      startLoading();
+    }
+  }, 200);
+}
+
+function goBack() {
+  if (isLocking || currentIndex === 0) return;
+  currentIndex--;
+  renderQuestion();
+}
+
+/* ================================================================
+ * 计算页：约 1 秒加载动画 + 文案轮播
+ * ================================================================ */
+const LOAD_MSGS = ["正在读取你的潜意识", "正在翻译你的嘴硬", "正在生成结果"];
+let loadTimer = null;
+
+function startLoading() {
+  showPage("page-loading");
+  let msgIdx = 0;
+  document.getElementById("load-msg").textContent = LOAD_MSGS[0];
+  loadTimer = setInterval(() => {
+    msgIdx = (msgIdx + 1) % LOAD_MSGS.length;
+    document.getElementById("load-msg").textContent = LOAD_MSGS[msgIdx];
+  }, 420);
+
+  setTimeout(() => {
+    clearInterval(loadTimer);
+    const result = calculateResult(answers);
+    renderResult(result.key);
+    showPage("page-result");
+  }, 1300);
+}
+
+/* ================================================================
+ * 结果页渲染
+ * ================================================================ */
+let currentResultKey = null;
+
+function renderResult(key) {
+  currentResultKey = key;
+  const r = results[key];
+  document.getElementById("result-icon").textContent = r.icon;
+  document.getElementById("result-tag").textContent = "「" + r.tag + "」";
+  document.getElementById("result-name").textContent = r.name;
+  document.getElementById("result-verdict").textContent = r.verdict;
+
+  const kwBox = document.getElementById("result-keywords");
+  kwBox.innerHTML = "";
+  r.keywords.forEach(kw => {
+    const pill = document.createElement("span");
+    pill.className = "keyword-pill";
+    pill.textContent = "# " + kw;
+    kwBox.appendChild(pill);
+  });
+
+  document.getElementById("result-desc").textContent = r.desc;
+  document.getElementById("result-advice").textContent = r.advice;
+  document.getElementById("result-share").textContent = r.share;
+}
+
+/* ================================================================
+ * 复制文案：navigator.clipboard 优先，失败降级为选中文本
+ * ================================================================ */
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+function copyShareText() {
+  if (!currentResultKey) return;
+  const text = results[currentResultKey].share;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast("已复制，去发疯吧 ✌️");
+    }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+// 降级方案：创建临时文本域 → 选中 → execCommand("copy")
+function fallbackCopy(text) {
+  const ta = document.createElement("textarea");
+  ta.value = text;
+  ta.style.cssText = "position:fixed;left:-9999px;top:-9999px;opacity:0;";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    const ok = document.execCommand("copy");
+    showToast(ok ? "已复制，去发疯吧 ✌️" : "复制失败，长按文字手动复制吧");
+  } catch (e) {
+    showToast("复制失败，长按文字手动复制吧");
+  }
+  document.body.removeChild(ta);
+}
+
+/* ================================================================
+ * 分享卡生成函数：Canvas 绘制 750x1000 竖版结果卡，可保存图片
+ * ================================================================ */
+function generateShareCard() {
+  if (!currentResultKey) return;
+  const r = results[currentResultKey];
+
+  const W = 750, H = 1000;
+  const canvas = document.createElement("canvas");
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  const FONT = '-apple-system, "PingFang SC", "Microsoft YaHei", sans-serif';
+
+  // 背景：暖白底 + 顶部强调色色块
+  ctx.fillStyle = "#FFF9F5";
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = "#FF6B5A";
+  ctx.beginPath();
+  ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 220);
+  ctx.quadraticCurveTo(W / 2, 300, 0, 220);
+  ctx.closePath();
+  ctx.fill();
+
+  // 顶部标题
+  ctx.fillStyle = "rgba(255,255,255,.95)";
+  ctx.font = "600 30px " + FONT;
+  ctx.textAlign = "center";
+  ctx.fillText("潜意识实验室 · 测试结果", W / 2, 90);
+  ctx.font = "400 22px " + FONT;
+  ctx.fillStyle = "rgba(255,255,255,.85)";
+  ctx.fillText("测测你潜意识里最渴望什么", W / 2, 135);
+
+  // 结果 emoji
+  ctx.font = "120px " + FONT;
+  ctx.fillText(r.icon, W / 2, 420);
+
+  // 类型标签
+  ctx.fillStyle = "#FFE9E5";
+  roundRect(ctx, W / 2 - 130, 470, 260, 52, 26);
+  ctx.fill();
+  ctx.fillStyle = "#FF6B5A";
+  ctx.font = "700 26px " + FONT;
+  ctx.fillText("「" + r.tag + "」", W / 2, 506);
+
+  // 结果名称
+  ctx.fillStyle = "#2B2B2B";
+  ctx.font = "800 88px " + FONT;
+  ctx.fillText(r.name, W / 2, 630);
+
+  // 判词（自动换行）
+  ctx.font = "700 30px " + FONT;
+  drawWrappedText(ctx, r.verdict, W / 2, 700, W - 160, 46);
+
+  // 关键词胶囊
+  const pillY = 790;
+  const pillFont = "600 24px " + FONT;
+  ctx.font = pillFont;
+  let totalW = 0;
+  const pillTexts = r.keywords.map(k => "# " + k);
+  const pillWidths = pillTexts.map(t => ctx.measureText(t).width + 40);
+  totalW = pillWidths.reduce((a, b) => a + b, 0) + 16 * (pillTexts.length - 1);
+  let px = (W - totalW) / 2;
+  pillTexts.forEach((t, i) => {
+    ctx.fillStyle = "#F6EEEA";
+    roundRect(ctx, px, pillY, pillWidths[i], 46, 23);
+    ctx.fill();
+    ctx.fillStyle = "#8A8380";
+    ctx.textAlign = "center";
+    ctx.fillText(t, px + pillWidths[i] / 2, pillY + 32);
+    px += pillWidths[i] + 16;
+  });
+
+  // 底部分享文案
+  ctx.fillStyle = "#FF6B5A";
+  ctx.font = "700 30px " + FONT;
+  drawWrappedText(ctx, r.share, W / 2, 880, W - 160, 44);
+
+  // 底部免责声明
+  ctx.fillStyle = "#C4B8B2";
+  ctx.font = "400 20px " + FONT;
+  ctx.fillText("娱乐向测试 · 非专业心理测评", W / 2, 960);
+
+  // 导出图片：点一下直接调起系统保存，不再经过弹层预览
+  // 优先级：① Web Share API（iOS/Android 系统分享面板，一键「存储图像」）
+  //        ② a[download] 触发下载（桌面端 / Android）
+  //        ③ 兜底弹出图片弹层，长按保存
+  const cardFilename = "潜意识测试结果-" + r.name + ".png";
+  if (canvas.toBlob) {
+    canvas.toBlob(function (blob) {
+      if (!blob) { showCardOverlay(canvas.toDataURL("image/png")); return; }
+      if (cardBlobUrl) URL.revokeObjectURL(cardBlobUrl); // 释放上一张，防内存泄漏
+      cardBlobUrl = URL.createObjectURL(blob);
+
+      // 方案①：Web Share API——系统级保存，iOS 分享面板里点「存储图像」即进相册
+      try {
+        const file = new File([blob], cardFilename, { type: "image/png" });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          navigator.share({
+            files: [file],
+            title: "我的潜意识测试结果"
+          }).then(() => {
+            showToast("已保存到相册 🖼️");
+          }).catch((err) => {
+            // 用户取消分享不算错误；其他异常走兜底弹层
+            if (!err || err.name !== "AbortError") showCardOverlay(cardBlobUrl);
+          });
+          return;
+        }
+      } catch (e) { /* 老浏览器不支持 File/Share，走下面的方案 */ }
+
+      // 方案②：非 iOS 直接触发下载
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+        || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+      if (!isIOS) {
+        const a = document.createElement("a");
+        a.href = cardBlobUrl;
+        a.download = cardFilename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast("结果卡已开始下载 🖼️");
+        return;
+      }
+
+      // 方案③：iOS 但不支持 Web Share（老系统），弹出图片长按保存
+      showCardOverlay(cardBlobUrl);
+    }, "image/png");
+  } else {
+    showCardOverlay(canvas.toDataURL("image/png"));
+  }
+}
+
+let cardBlobUrl = null; // 当前结果卡的 Blob URL
+
+// 弹出结果卡弹层
+function showCardOverlay(src) {
+  document.getElementById("card-img").src = src;
+  document.getElementById("card-overlay").classList.add("show");
+  // iOS Safari / 微信内置浏览器不支持 download 属性，隐藏下载按钮只留长按保存
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  document.getElementById("btn-card-download").classList.toggle("ios-hide", isIOS);
+}
+
+// 下载结果卡（桌面端 / Android Chrome 有效）
+function downloadShareCard() {
+  const imgEl = document.getElementById("card-img");
+  if (!imgEl.src) return;
+  const r = results[currentResultKey];
+  const a = document.createElement("a");
+  a.href = imgEl.src;
+  a.download = "潜意识测试结果-" + r.name + ".png";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast("已开始下载 🖼️");
+}
+
+// 关闭结果卡弹层
+function closeCardOverlay() {
+  document.getElementById("card-overlay").classList.remove("show");
+}
+
+// Canvas 工具：圆角矩形
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// Canvas 工具：居中自动换行文本
+function drawWrappedText(ctx, text, x, y, maxWidth, lineHeight) {
+  const chars = text.split("");
+  let line = "";
+  let lines = [];
+  chars.forEach(ch => {
+    if (ctx.measureText(line + ch).width > maxWidth) {
+      lines.push(line);
+      line = ch;
+    } else {
+      line += ch;
+    }
+  });
+  lines.push(line);
+  ctx.textAlign = "center";
+  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lineHeight));
+}
+
+/* ================================================================
+ * 事件绑定与初始化
+ * ================================================================ */
+document.getElementById("btn-start").addEventListener("click", () => {
+  currentIndex = 0;
+  answers = {};
+  renderQuestion();
+  showPage("page-quiz");
+});
+
+elBack.addEventListener("click", goBack);
+document.getElementById("btn-copy").addEventListener("click", copyShareText);
+document.getElementById("btn-share-card").addEventListener("click", generateShareCard);
+document.getElementById("btn-card-download").addEventListener("click", downloadShareCard);
+document.getElementById("btn-card-close").addEventListener("click", closeCardOverlay);
+// 点击弹层遮罩空白处关闭（点图片本身不关闭）
+document.getElementById("card-overlay").addEventListener("click", (e) => {
+  if (e.target === e.currentTarget) closeCardOverlay();
+});
+document.getElementById("btn-restart").addEventListener("click", () => {
+  currentIndex = 0;
+  answers = {};
+  showPage("page-cover");
+});
+
+// 初始显示封面页
+showPage("page-cover");
+</script>
+</body>
+</html>
